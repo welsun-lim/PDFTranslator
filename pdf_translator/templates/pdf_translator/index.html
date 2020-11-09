@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Translator</title>
+    <link rel="stylesheet" href="https://unpkg.com/purecss@2.0.3/build/pure-min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://purecss.io/css/pure/grids-responsive-min.css">
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+    <link rel="stylesheet" href="https://purecss.io/layouts/marketing/styles.css">
+</head>
+<body>
+
+<div class="header">
+    <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+        <a class="pure-menu-heading" href=".">PDF Translator</a>
+        <!--<ul class="pure-menu-list">
+            <li class="pure-menu-item pure-menu-selected"><a href="#" class="pure-menu-link">Home</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Tour</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sign Up</a></li>
+        </ul>-->
+    </div>
+</div>
+
+<div class="splash-container">
+    <div class="splash">
+        <h1 class="splash-head">PDF Translator</h1>
+        <form id='trans_form' class="pure-form" action="/read" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p class="splash-subhead">
+                <input id="trans_link" name="trans_link" type="text" placeholder="输入PDF链接或者直接点击按钮翻译文件" >
+                <input id="trans_file" name="trans_file" type="file" hidden >
+            </p>
+            <p>
+                <a class="pure-button pure-button-primary"  onclick="submit()">翻译</a>
+            </p>
+        </form>
+    </div>
+</div>
+
+<div class="content-wrapper">
+    <div class="content">
+        <h2 class="content-head is-center">联系我们</h2>
+
+        <div class="pure-g">
+            <div class="l-box pure-u-1 pure-u-md-1-3 pure-u-lg-1-3">
+                <h3 class="content-subhead">
+                    <i class="fa fa-th-large"></i>
+                    关于
+                </h3>
+                <p><a href="https://github.com/welsun-lim/PDFTranslator">PDFTranslator</a></p>
+            </div>
+
+            <div class="l-box pure-u-1 pure-u-md-1-3 pure-u-lg-1-3">
+
+                <h3 class="content-subhead">
+                    <i class="fa fa-rocket"></i>
+                    Github
+                </h3>
+                <p><a href="https://github.com/welsun-lim">welsun-lim</a></p>
+            </div>
+            <div class="l-box pure-u-1 pure-u-md-1-3 pure-u-lg-1-3">
+                <h3 class="content-subhead">
+                    <i class="fa fa-mobile"></i>
+                    Email
+                </h3>
+                <p><a href="mailto:welsun@yeah.net">welsun@yeah.net</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer l-box is-center">
+         Apache License 2.0 Copy from <a href="https://github.com/welsun-lim/PDFTranslator">PDFTranslator</a>
+    </div>
+
+</div>
+<script>
+    document.getElementById('trans_file').addEventListener('input', upload_file, false);
+    function submit() {
+        var link = document.getElementById('trans_link');
+        console.log("link >> ", link);
+        if (link.value.length>0){
+            console.log("submit");
+            document.getElementById('trans_form').submit()
+        }else{
+            console.log("trans_file");
+            document.getElementById('trans_file').click();
+        }
+    }
+    function upload_file (event) {
+        var file =  document.getElementById('trans_file');
+        console.log("file>>", file.value);
+        if(file.value.length > 0){
+            console.log("submit");
+            document.getElementById('trans_form').submit()
+        }
+    }
+</script>
+</body>
+</html>
