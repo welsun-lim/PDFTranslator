@@ -18,7 +18,7 @@ else:
 _logger.setLevel(logging.INFO)
 
 
-file = "Compact Descriptors for Video Analysis: the Emerging MPEG Standard.pdf"
+file = "CompactDescriptorsforVideoAnalysis.pdf: the Emerging MPEG Standard.pdf"
 """
 q=set()
 
