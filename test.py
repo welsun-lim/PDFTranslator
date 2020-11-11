@@ -7,6 +7,17 @@
 # from pdfminer.pdfparser import PDFParser, PDFDocument
 # import pdf_tools
 # import fitz
+
+import logging
+if __name__ == "__main__":
+    _logger = logging.getLogger()
+    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s',
+                        datefmt='%m/%d/%Y %I:%M:%S %p')
+else:
+    _logger = logging.getLogger(__name__)
+_logger.setLevel(logging.INFO)
+
+
 file = "Compact Descriptors for Video Analysis: the Emerging MPEG Standard.pdf"
 """
 q=set()
@@ -58,7 +69,6 @@ with open(file, 'rb') as pd_file:
                     exit()
 
 print(q)
-"""
 
 
 
@@ -136,9 +146,181 @@ def ananlysis_PDF(pdf_file):
         for img in img_list:
             print(fitz.Rect(img[:4]))
             pix=fitz.Pixmap(doc,img[0])
-            save_name="./圖片/page_{}_{}.png".format(page.number,i)
+            save_name="./media/page_{}_{}.png".format(page.number,i)
             pix.writePNG(save_name)
             image=pixmap2array(pix)
             i+=1
 
 ananlysis_PDF(file)
+analysis_table(file)
+
+"""
+import fitz
+
+doc = fitz.open(file)
+from enum import Enum
+import copy
+
+
+class FontFlag(Enum):
+    SuperScripted = 0
+    Italic = 1
+    Serifed = 2
+    Monospaced = 3
+    Bold = 4
+
+    @classmethod
+    def get_member_by_value(cls, value):
+        for key, value in cls.__members__.items():
+            if value.value == value:
+                return value
+            else:
+                raise ValueError("value(%r) not in FontFlag" % value)
+
+class WordStage(object):
+    def __init__(self, bbox, font, size, flags, color, origin=None, text=None, chars=None, **kwargs):
+        self.bbox = bbox
+        self.origin = origin
+        self.font = font
+        self.size = size
+        self.flags = FontFlag.get_member_by_value(flags)
+        self.color = color
+        self.text = text if text is not None else chars
+
+    @staticmethod
+    def _splicing(word_stages):
+        first_word_stages = word_stages
+        for word_stage in word_stages[:-1]:
+            text = word_stage['text'].strip()
+            if text[-1] == '-':
+                text = text[:-1]
+            first_word_stages.text.append(text)
+        first_word_stages.text = ' '.join(first_word_stages.text)
+        return first_word_stages
+
+    @staticmethod
+    def splicing(word_stages, unignores = ['size', 'font', 'bbox', 'color']):
+        last_ws = word_stages[0]
+        parts = []
+        new_word_stages =[copy.deepcopy(last_ws)]
+        for cur_ws in word_stages:
+            for unignore in unignores:
+                if getattr(last_ws, unignore, "@!#&&^*$") is not "@!#&&^*$":
+                    if getattr(last_ws, unignore) != getattr(cur_ws, unignore):
+                        parts.append([copy.deepcopy(cur_ws)])
+                        new_word_stages = [copy.deepcopy(cur_ws)]
+                        last_ws = cur_ws
+                    else:
+                        new_word_stages.append(copy.deepcopy(cur_ws))
+
+        first_word_stages = word_stages[0]
+        first_word_stages.text = [first_word_stages.text, ]
+        for word_stage in word_stages[1:]:
+            if word_stage.size != first_word_stages.size:
+                _logger.debug("first_word_stages.size(%r) != word_stage.size(%r)" % (word_stage.size, first_word_stages.size))
+
+            if word_stage.size != first_word_stages.size:
+                _logger.debug("first_word_stages.size(%r) != word_stage.size(%r)" % (word_stage.size, first_word_stages.size))
+
+            if word_stage.size != first_word_stages.size:
+                _logger.debug("first_word_stages.size(%r) != word_stage.size(%r)" % (word_stage.size, first_word_stages.size))
+
+            if word_stage.size != first_word_stages.size:
+                _logger.debug("first_word_stages.size(%r) != word_stage.size(%r)" % (word_stage.size, first_word_stages.size))
+
+            text = word_stage['text'].strip()
+            if text[-1] == '-':
+                text = text[:-1]
+            first_word_stages.text.append(text)
+        first_word_stages.text = ' '.join(first_word_stages.text)
+        return first_word_stages
+
+
+
+
+
+
+
+class PDFReader(object):
+    def close(self):
+        if isinstance(self.doc, fitz.Document) and not self.doc.isClosed:
+            self.doc.close()
+
+    @staticmethod
+    def open(filepath):
+        pdf_doc = fitz.open(filepath)
+        if pdf_doc.isPDF:
+            return pdf_doc
+        raise
+
+    @property
+    def filepath(self):
+        return self._filepath
+
+    @filepath.setter
+    def filepath(self, filepath):
+        self.close()
+        pdf_doc = self.open(filepath)
+        self.close()
+        self.doc = pdf_doc
+        self._filepath = filepath
+
+    def __delete__(self):
+        self.close()
+
+    def __enter__(self, filepath):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.doc = fitz.open(filepath)
+
+    def get_contents(self):
+        return self.doc.getToC()[0]
+
+    def get_page_count(self):
+        return self.doc.pageCount
+
+    def parse(self):
+        def parse_image_block(block):
+            # block['type']==1
+            width = block['width']
+            height = block['height']
+            number = block['number'] # 索引
+            ext = block['ext']
+            colorspace = block['colorspace'] # 色彩空间
+            image = block['image'] # b''
+
+def parse_text_lines(lines):
+    # block['type']==0
+    part = []
+    for line in lines:
+        text_line = []
+        span_font = line['spans'][0]['font']
+        for span in line['spans']:
+            if span_font != span['font']:
+                _logger.debug("span_font: {}, span['font']: {}".format(span_font, span['font']))
+            text = span['text'].strip()
+            if text[-1]=='-':
+                text = text[:-1] + ' '
+            else:
+                text = text + ' '
+            text_line.append(text)
+        text_line = ''.join(text_line)
+        part.append(text_line)
+    print(part)
+    # part = ''.join(part)
+
+
+        # for page in self.doc.pages(start, stop, step):
+        data = []
+        for page in self.doc.pages():
+            page_dict = page.getText('dict')
+            if 'blocks' in page_dict:
+                for block in page_dict['blocks']:
+
+
+
