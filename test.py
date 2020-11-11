@@ -187,6 +187,26 @@ class WordStage(object):
         self.color = color
         self.text = text if text is not None else chars
 
+    def load_dict(self, bbox, font, size, flags, color, origin=None, text=None, chars=None, **kwargs):
+        self.bbox = bbox
+        self.origin = origin
+        self.font = font
+        self.size = size
+        self.flags = FontFlag.get_member_by_value(flags)
+        self.color = color
+        self.text = text if text is not None else chars
+
+    def dump_dict(self):
+        return {
+            "bbox": self.bbox,
+            "origin":   self.origin,
+            "font": self.font,
+            "size": self.size,
+            "flags": self.flags.value,
+            "color": self.color,
+            "text": self.text
+        }
+
     @staticmethod
     def _splicing(word_stages):
         first_word_stages = word_stages
@@ -198,20 +218,25 @@ class WordStage(object):
         first_word_stages.text = ' '.join(first_word_stages.text)
         return first_word_stages
 
-    @staticmethod
-    def splicing(word_stages, unignores = ['size', 'font', 'bbox', 'color']):
+    @classmethod
+    def splicing(cls, word_stages, unignores = ['size', 'font', 'bbox', 'color']):
         last_ws = word_stages[0]
         parts = []
         new_word_stages =[copy.deepcopy(last_ws)]
         for cur_ws in word_stages:
+            new_part_flag = False
             for unignore in unignores:
-                if getattr(last_ws, unignore, "@!#&&^*$") is not "@!#&&^*$":
-                    if getattr(last_ws, unignore) != getattr(cur_ws, unignore):
-                        parts.append([copy.deepcopy(cur_ws)])
-                        new_word_stages = [copy.deepcopy(cur_ws)]
-                        last_ws = cur_ws
-                    else:
-                        new_word_stages.append(copy.deepcopy(cur_ws))
+                last_ws_prop = getattr(last_ws, unignore, "@!#&&^*$")
+                if last_ws_prop is not "@!#&&^*$" and getattr(cur_ws, unignore):
+                    new_part_flag = True
+                    break
+            if new_part_flag:
+                parts.append(cls._splicing())
+                new_word_stages = [copy.deepcopy(cur_ws)]
+                last_ws = cur_ws
+            else:
+                new_word_stages.append(copy.deepcopy(cur_ws))
+
 
         first_word_stages = word_stages[0]
         first_word_stages.text = [first_word_stages.text, ]
